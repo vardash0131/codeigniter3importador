@@ -63,7 +63,9 @@ public function __construct()
      */
     private function get_server_file()
     {
-        $list = glob(FCPATH."files/to_import/*.csv");
+        $list1 = glob(FCPATH."files/to_import/*.csv");
+        $list2 = glob(FCPATH."files/to_import/*.txt");
+        $list = array_merge($list1,$list2);
 
         if (!empty($list)) {
 

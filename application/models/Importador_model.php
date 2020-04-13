@@ -21,6 +21,12 @@ class Importador_model extends CI_Model{
             return $table;
         }
     }
+    private function diff_folios($a,$b)
+    {
+        if (isset($a['numero_de_folio']) && isset($b['numero_de_folio'])) {
+            return (int)$b['numero_de_folio'] - (int)$a['numero_de_folio'];
+        }
+    }
     public function tableinicial($mes,$anio)
     {
 
@@ -142,13 +148,31 @@ class Importador_model extends CI_Model{
     }
     public function importar($array,$file,$tipo,$tabla)
     {
+        $this->db->select('numero_de_folio as numero_de_folio')
+            ->from($tabla);
         $sale_ids_chunk = array_chunk($array, 1000);
+
         foreach($sale_ids_chunk as $sale_ids)
         {
-            $insert=$this->format_db($array,$tipo);
-            $this->db->insert_batch($tabla, $insert);
+             $this->db->or_where_in('numero_de_folio', array_column($sale_ids,'Número de Folio de Boleto'));
         }
 
+        $resultado= $this->db->get()->result_array();
+
+        if (!$resultado) {
+              $insert=$this->format_db($array,$tipo);
+            $this->db->insert_batch($tabla, $insert);
+        } else {
+            $udif=$this->format_db($array,$tipo);
+
+            $diferencia=array_udiff($udif, $resultado, [$this, 'diff_folios']);
+            if ($diferencia)
+            {
+                $this->db->insert_batch($tabla, $diferencia);
+            }
+            $update=$this->format_db($array,$tipo);
+            $this->db->update_batch($tabla,$update,'numero_de_folio');
+        }
         return TRUE;
     }
     private function format_db($array,$tipo)
