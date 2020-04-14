@@ -5,6 +5,8 @@ class Importador_model extends CI_Model{
     function __construct()
     {
         parent::__construct();
+        ini_set('memory_limit','4048M');
+        set_time_limit(0);
     }
     private function coct($table, $fields)
     {
